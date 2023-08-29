@@ -1,25 +1,38 @@
-'use client'
-import { CldUploadButton } from 'next-cloudinary'
-import { UploadResult } from '../page'
-import { Button } from '@/components/ui/button'
-import { UploadIcon } from '../../../public/icons/Upload'
+import { CldImage } from 'next-cloudinary'
+import UploadButton from './UploadButton'
+import cloudinary from 'cloudinary'
+import { CloudinaryImage } from './CloudinaryImage'
 
-export default function GalleryPage() {
+type SearchResult = {
+  public_id: string
+}
+
+export default async function GalleryPage() {
+  const results = (await cloudinary.v2.search
+    .expression('resource_type:image')
+    .sort_by('created_at', 'desc')
+    .max_results(10)
+    .execute()) as { resources: SearchResult[] }
+
+  console.log(results)
   return (
-    <section className="flex justify-between">
-      <h1 className="text-3xl font-bold">Gallery</h1>
-      <Button asChild>
-        <div className="flex gap-2">
-          <UploadIcon></UploadIcon>
+    <section className='flex flex-col gap-8'>
+      <div className="flex justify-between">
+        <h1 className="text-3xl font-bold">Gallery</h1>
+        <UploadButton />
+      </div>
 
-          <CldUploadButton
-            onUpload={(result: UploadResult) => {
-              //setImageId(result.info.public_id)
-            }}
-            uploadPreset="peii6ddf"
+      <div className="grid grid-cols-4 gap-4">
+        {results.resources.map((result) => (
+          <CloudinaryImage
+            key={result.public_id}
+            alt="Gallery Images"
+            width={400}
+            height={300}
+            publicId={result.public_id}
           />
-        </div>
-      </Button>
+        ))}
+      </div>
     </section>
   )
 }
